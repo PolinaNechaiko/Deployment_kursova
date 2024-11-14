@@ -1,5 +1,5 @@
 pipeline {
-    agents: any
+    agent any
 
     environment {
         SONARQUBE = 'sonarqube'
@@ -12,7 +12,7 @@ pipeline {
             }
         }
 
-        stage ('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonarqube') {
@@ -24,19 +24,22 @@ pipeline {
 
         stage("Build Docker Image") {
             steps {
-                sh 'docker build -t artifact .'
+                sh 'docker build -t myrepo/artifact:${BUILD_NUMBER} .'
             }
         }
 
         stage("Push Docker Image") {
             steps {
-                sh 'docker push artifact'
+                withCredentials([usernamePassword(credentialsId: 'docker-credentials-id', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
+                    sh 'docker push myrepo/artifact:${BUILD_NUMBER}'
+                }
             }
         }
 
         stage("Deploy to Nginx") {
             steps {
-                sh 'docker run -d -p 80:80 artifact'
+                sh 'docker run -d --name myapp --network nginx_network -p 80:80 myrepo/artifact:${BUILD_NUMBER}'
             }
         }
     }
@@ -51,3 +54,4 @@ pipeline {
         }
     }
 }
+
