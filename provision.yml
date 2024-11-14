@@ -1,0 +1,175 @@
+---
+- name: Install Docker, Jenkins, Nginx, and Java
+  hosts: all
+  become: true
+  tasks:
+
+    # Update package index
+    - name: Update APT package index
+      apt:
+        update_cache: yes
+
+    # Fix broken package configurations if any
+    - name: Run dpkg --configure -a to fix broken packages
+      command: dpkg --configure -a
+      when: ansible_facts.packages is defined
+
+    # Install prerequisite packages
+    - name: Install prerequisite packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+  
+- name: Install and Configure SonarQube
+  hosts: all
+  become: yes
+  vars:
+    sonarqube_version: "9.9.0.65466"  # Replace with the desired version
+    sonarqube_install_dir: "/opt/sonarqube"
+    sonarqube_url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+    sonarqube_service_name: "sonarqube"
+  
+  tasks:
+    - name: Ensure required dependencies are installed
+      apt:
+        name:
+          - openjdk-11-jdk
+          - unzip
+        state: present
+        update_cache: yes
+
+    - name: Download SonarQube package
+      get_url:
+        url: "{{ sonarqube_url }}"
+        dest: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+        mode: '0644'
+
+    - name: Create SonarQube installation directory
+      file:
+        path: "{{ sonarqube_install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Unzip SonarQube package
+      unarchive:
+        src: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+        dest: "{{ sonarqube_install_dir }}"
+        remote_src: yes
+
+    - name: Create a SonarQube systemd service file
+      copy:
+        dest: "/etc/systemd/system/{{ sonarqube_service_name }}.service"
+        content: |
+          [Unit]
+          Description=SonarQube
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=sonar
+          ExecStart={{ sonarqube_install_dir }}/sonarqube-{{ sonarqube_version }}/bin/linux-x86-64/sonar.sh start
+          ExecStop={{ sonarqube_install_dir }}/sonarqube-{{ sonarqube_version }}/bin/linux-x86-64/sonar.sh stop
+          Restart=always
+          LimitNOFILE=65536
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd to apply SonarQube service configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start SonarQube service
+      systemd:
+        name: "{{ sonarqube_service_name }}"
+        enabled: yes
+        state: started
+
+    - name: Open SonarQube ports on firewall (optional, if using UFW)
+      ufw:
+        rule: allow
+        port: "9000"
+        proto: tcp
+
+
+
+    # Install OpenJDK 11 (Java)
+    - name: Install OpenJDK 17
+      apt:
+        name: openjdk-17-jdk
+        state: present
+
+    # Verify Java installation
+    - name: Verify Java installation
+      command: java -version
+      register: java_version
+      ignore_errors: true
+
+    - name: Display Java version
+      debug:
+        msg: "Java version: {{ java_version.stdout }}"
+
+    # Install Docker
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # Install Jenkins
+    - name: Add Jenkins GPG key
+      apt_key:
+        url: https://pkg.jenkins.io/debian/jenkins.io.key
+        state: present
+
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: "deb http://pkg.jenkins.io/debian-stable binary/"
+        state: present
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Start and enable Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    # Install Nginx
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable Nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
