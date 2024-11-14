@@ -2,55 +2,49 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE = 'sonarqube'
+        SONARQUBE = 'sonarqube'  // the name of your SonarQube server in Jenkins settings
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/PolinaNechaiko/Deployment_kursova.git'
+                checkout scm
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 script {
+                    // Run SonarQube Scanner
                     withSonarQubeEnv('sonarqube') {
-                        sh 'mvn clean install sonar:sonar'
+                        sh 'sonar-scanner'
                     }
                 }
             }
         }
 
-        stage("Build Docker Image") {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t myrepo/artifact:${BUILD_NUMBER} .'
+                // Build Docker image (or other build tasks)
             }
         }
 
-        stage("Push Docker Image") {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-credentials-id', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                    sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
-                    sh 'docker push myrepo/artifact:${BUILD_NUMBER}'
-                }
+                // Push Docker image (or other tasks)
             }
         }
 
-        stage("Deploy to Nginx") {
+        stage('Deploy to Nginx') {
             steps {
-                sh 'docker run -d --name myapp --network nginx_network -p 80:80 myrepo/artifact:${BUILD_NUMBER}'
+                // Deploy to Nginx (or other tasks)
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-
-        failure {
-            echo 'Pipeline failed! Womp-Womp'
+        always {
+            cleanWs()
         }
     }
 }
