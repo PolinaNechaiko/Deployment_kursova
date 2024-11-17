@@ -5,7 +5,7 @@ services:
     image: sonarqube:community
     container_name: sonarqube
     ports:
-      - "9000:9000" # SonarQube default port
+      - "9000:9000"  # SonarQube default port
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonarqube
       SONAR_JDBC_USERNAME: sonar
@@ -21,13 +21,25 @@ services:
       POSTGRES_PASSWORD: sonar
       POSTGRES_DB: sonarqube
 
+  vue-app:
+    image: pnechaiko/artifact:latest # ваш Docker образ з Vue.js
+    container_name: vue-app
+    build:
+      context: .
+      dockerfile: Dockerfile # ваш Dockerfile для Vue.js
+    volumes:
+      - ./dist:/usr/share/nginx/html # Мапінг директорії з побудованими файлами на Nginx
+    depends_on:
+      - nginx
+
   nginx:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "80:80" # Publicly accessible Nginx
+      - "80:80"  # Публічний порт Nginx
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro # Custom Nginx configuration
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Кастомна конфігурація Nginx
+      - ./dist:/usr/share/nginx/html:ro  # Зібрані файли Vue.js
     depends_on:
-      - sonarqube
+      - vue-app  # Nginx залежить від vue-app
 
