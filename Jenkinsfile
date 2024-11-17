@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    options{
+	timestamps()
+}
     stages {
         stage('Getting project') {
             steps {
@@ -35,7 +37,7 @@ pipeline {
                 script {
                     // Налаштування SonarQube та запуск аналізу
                     def scannerHome = tool 'Scanner'
-                    withSonarQubeEnv('lab111') {
+                    withSonarQubeEnv('sonarqube') {
                         // Запуск SonarQube Scanner
                         sh "cd Deployment_kursova && ${scannerHome}/bin/sonar-scanner"
                     }
