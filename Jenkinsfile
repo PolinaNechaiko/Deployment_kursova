@@ -19,7 +19,7 @@ pipeline {
                 script {
                     // Run SonarQube Scanner
                     withSonarQubeEnv('sonarqube') {
-                        sh 'sonar-scanner'
+                        sonarqubeSscanner()
                     }
                 }
             }
