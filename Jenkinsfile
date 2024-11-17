@@ -45,6 +45,18 @@ pipeline {
             }
         }
 
+        stage('Quality Gate check') {
+            steps {
+                script {
+                    // Wait for the quality gate to pass/fail
+                    def qualityGate = waitForQualityGate('sonarqube')  // 'sonarqube' is the name of the SonarQube server in Jenkins
+                    if (qualityGate.status != 'OK') {
+                        error "Quality Gate failed: ${qualityGate.status}"
+                    }
+                }
+            }
+        }
+
  	stage('Building Docker image with Nginx') {
             steps {
                 script {
