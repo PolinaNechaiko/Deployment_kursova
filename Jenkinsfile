@@ -59,6 +59,14 @@ pipeline {
 	stage('Deploying Docker container') {
             steps {
                 script {
+		    def containerExists = sh(script: "docker ps -a -q -f name=my-nginx-container", returnStdout: true).trim()
+
+		    if (containerExists){
+		    sh """
+			docker stop my-nginx-container
+			docker rm my-nginx-container
+			"""
+		    }
                     // Запуск контейнера з новим образом Nginx
                     sh """
                         docker run -d -p 80:80 --name my-nginx-container my-nginx-image
