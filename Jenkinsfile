@@ -44,6 +44,28 @@ pipeline {
                 }
             }
         }
+
+ 	stage('Building Docker image with Nginx') {
+            steps {
+                script {
+                    // Створення Docker образу Nginx із побудованим артефактом
+                    sh """
+                        docker build -t my-nginx-image -f ./Deployment_kursova/Dockerfile .
+                    """
+                }
+            }
+        }
+
+	stage('Deploying Docker container') {
+            steps {
+                script {
+                    // Запуск контейнера з новим образом Nginx
+                    sh """
+                        docker run -d -p 80:80 --name my-nginx-container my-nginx-image
+                    """
+                }
+            }
+        }
     }
 }
 
