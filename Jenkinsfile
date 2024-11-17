@@ -26,7 +26,7 @@ pipeline {
         stage('Building artifact') {
             steps {
                 // Збірка артефакту
-                sh "npm run build --prefix ./Deployment_kursova"
+                sh "npm run build:prod --prefix ./Deployment_kursova"
             }
         }
 
