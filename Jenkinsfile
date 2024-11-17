@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube'  // the name of your SonarQube server in Jenkins settings
+	DOCKER_USERNAME = 'pnechaiko'
+	DOCKER_PASSWORD = '123Apple123123'
     }
 
     stages {
@@ -25,19 +27,23 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Build Docker image (or other build tasks)
+                sh 'docker build -t artifact:latest .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                // Push Docker image (or other tasks)
+                sh '''
+		docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+		docker tag artifact:latest pnechaiko/artifact:latest
+		docker push pnechaiko/artifact:latest
+		'''
             }
         }
 
         stage('Deploy to Nginx') {
             steps {
-                // Deploy to Nginx (or other tasks)
+                sh 'docker-compose up -d'
             }
         }
     }
