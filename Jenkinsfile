@@ -39,7 +39,10 @@ pipeline {
                     def scannerHome = tool 'Scanner'
                     withSonarQubeEnv('sonarqube') {
                         // Запуск SonarQube Scanner
-                        sh "cd Deployment_kursova && ${scannerHome}/bin/sonar-scanner"
+                        sh """
+			${scannerHome}/bin/sonar-scanner \			
+			-Dsonar.projectBaseDir=./Deployment_kursova
+			"""
                     }
                 }
             }
