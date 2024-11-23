@@ -21,14 +21,14 @@ pipeline {
         stage('Installing dependencies') {
             steps {
                 // Встановлення залежностей
-                sh "npm install --prefix ./Deployment_kursova"
+                sh "npm install"
             }
         }
 
         stage('Building artifact') {
             steps {
                 // Збірка артефакту
-                sh "npm run build:prod --prefix ./Deployment_kursova"
+                sh "npm run build:prod"
             }
         }
 
@@ -62,7 +62,7 @@ pipeline {
                 script {
                     // Створення Docker образу Nginx із побудованим артефактом
                     sh """
-                        docker build -t my-nginx-image -f ./Deployment_kursova/Dockerfile .
+                        docker build -t my-nginx-image .
                     """
                 }
             }
